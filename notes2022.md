@@ -597,20 +597,12 @@ Bonne pratiques : éviter la duplication des droits en utilisant des groupes.
   un groupe et y mettre ces utilisateurs
 
 Un example réaliste et sécurisé :
-<<<<<<< Updated upstream
 une base dbpaie. Jean et Philippe peuvent la lire à termes beaucoup
 d'autres donc on crée un role "groupe" _paie_ pour ces droits,
 admpaye (administre les données), appli (utilisé par une application métier)
 et Anne ont besoin d'écrire aussi. 
 
 Remarque : le droit de insertion sur une table qui contient
-=======
-une base dbpaie. Jean et Philippe peuvent la lire,
-admpaye administre les données, appli (utilisé par une application métier)
-et Anne ont besoin d'écrire aussi (il seront dans le rôle "groupe" paye)
-
-Remarque : le droit de modification/insertion sur une table qui contient
->>>>>>> Stashed changes
 des clef primaire auto incrémentées (SERIAL) nécessite des droit sur
 la séquence associé (table_champ_seq) directement (ou sur toutes les
 séquences de la base comme ci-dessous).
@@ -625,6 +617,7 @@ CREATE ROLE anne LOGIN PASSWORD '...';
 CREATE ROLE jean LOGIN PASSWORD '...';
 CREATE ROLE philippe LOGIN PASSWORD '...';
 CREATE ROLE appli LOGIN PASSWORD '...';
+CREATE ROLE other LOGIN PASSWORD '...';
 
 REVOKE CONNECT ON DATABASE dbpaie FROM PUBLIC;
 GRANT CONNECT ON DATABASE dbpaie TO anne,jean,philippe,admpaye,appli;
