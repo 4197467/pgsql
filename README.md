@@ -18,5 +18,7 @@ autres dépôts : http://framagit.org/jpython/meta
 - séparer moteur postgres des tablespaces (data)
 - compiler postgres 9.6.1 pour edsr prod
 -------------
+```
 select relname,last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables;
 TABLE pg_stat_activity;
+```
