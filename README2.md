@@ -5,6 +5,7 @@
 autres dépôts : http://framagit.org/jpython/meta
 
 
+<<<<<<< Updated upstream:README2.md
 - wget http://monkey.org/~provos/libevent-1.4.14b-stable.tar.gz --no-check-certificate
 - wget https://ftp.postgresql.org/pub/source/v9.6.1/postgresql-9.6.1.tar.bz2 --no-check-certificate
 - wget https://github.com/tmux/tmux/archive/refs/tags/3.3a.tar.gz
@@ -22,3 +23,5 @@ autres dépôts : http://framagit.org/jpython/meta
 select relname,last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables;
 TABLE pg_stat_activity;
 ```
+=======
+>>>>>>> Stashed changes:README.md
