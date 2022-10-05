@@ -14,5 +14,6 @@ autres dépôts : http://framagit.org/jpython/meta
 
 - TODO :
 - migrer slurm vers postgres sur les controleurs (master slave)
+  - https://www.postgresql.org/docs/9.5/high-availability.html
 - séparer moteur postgres des tablespaces (data)
 - compiler postgres 9.6.1 pour edsr prod
