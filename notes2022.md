@@ -527,7 +527,7 @@ connexions locales, par socket, puisqu'elles sont déclarés en "trust")
 ~~~~
 $ sudo su - postgres
 $ /usr/local/pgsql/bin/psql
-[local]:5432 postgres@postgres=# ALTER ROLE postgres PASSWD 'bidule123';
+[local]:5432 postgres@postgres=# ALTER ROLE postgres PASSWORD 'bidule123';
 [local]:5432 postgres@postgres=# \q
 ~~~~ 
 
@@ -535,19 +535,153 @@ $ /usr/local/pgsql/bin/psql
 
 ~~~~
 # IP de mon poste Windows (voir ipconfig dans cmd)
-host    all             postgres        10.145.39.61/32         scram-sha-256
-# IP du système Linux (pour test) 
-# /usr/local/pgsql/bin/psql -h 10.145.39.105 -U postgres 
-host    all             postgres        10.145.39.105/32        scram-sha-256 
+host    all             postgres        10.145.39.XX/32         scram-sha-256
+# IP du système Linux (pour test) avec :
+# /usr/local/pgsql/bin/psql -h 10.145.39.YY -U postgres 
+host    all             postgres        10.145.39.YY/32        scram-sha-256 
 ~~~~
 
 On relance le serveur et on teste en local en passant par le réseau :
-(XX correspondant à l'IP de notre système Linux) :
+(YY correspondant à l'IP de notre système Linux) :
 
 ~~~~
-$ /usr/local/pgsql/bin/psql -h 10.145.39.XX -U postgres
+$ sudo systemct restart postgresql
+$ /usr/local/pgsql/bin/psql -h 10.145.39.YY -U postgres
+Null display is "[null]".
+Timing is on.
+Expanded display is used automatically.
+psql (14.5)
+Type "help" for help.
+
+127.0.0.1:5432 postgres@postgres=# \q
 ~~~~
+
+On constate que l'on est connecté à travers le réseau (pas de "local"
+dans l'invite) à notre instance à partir du serveur. 
 
 On peut installer pgAdmin sous Windows et l'utiliser pour 
 se connecter à notre PosgreSQL.
 
+Concernant PgAdmin : http://www.pgadmin.org/
+
+- Multiplateforme (Linux, Mac, Windows)
+- Il demande la création d'un mot de passe au premier lancement
+  (il sert à chiffrer sa configuration sur disque puisque elle
+  contiendra potentiellement des mots de passe de serveurs PostgreSQL
+
+Durcir un peu la configuration de la sécurité :
+
+- Mot de passe pour le rôle postgres même en local :
+Modification d'une ligne de `pg_hba.conf` :
+
+~~~~
+# Modif: scram-sha-256 au lieu de trust : impose un mdp pour toute connexion
+# locale (postgres ou non)
+local   all             all                                     scram-sha-256
+~~~~
+
+## Utilisateurs et rôles
+
+- Un utilisateur est un rôle avec l'option LOGIN
+- Un rôle sans LOGIN peut s'interpréter comme un groupe (ou un ensemble de droits)
+- Un objet PG, en particulier une base, a toujours un propriétaire (OWNER)
+  qui peut être un rôle quelconque (utilisateur ou groupe)
+
+Bonne pratiques : éviter la duplication des droits en utilisant des groupes.
+
+- Créer un utilisateur pour chaque application qui doit accéder à la base. 
+- Créer un utilisateur pour chaque personne réelle qui a besoin
+  d'accéder à une base
+- Si plusieurs applications ou utilisateurs "réels"
+  ont besoin exactement des même droits créer
+  un groupe et y mettre ces utilisateurs
+
+Un example réaliste et sécurisé :
+une base dbpaie. Jean et Philippe peuvent la lire à termes beaucoup
+d'autres donc on crée un role "groupe" _paie_ pour ces droits,
+admpaye (administre les données), appli (utilisé par une application métier)
+et Anne ont besoin d'écrire aussi. 
+
+Remarque : le droit de insertion sur une table qui contient
+des clef primaire auto incrémentées (SERIAL) nécessite des droit sur
+la séquence associé (table_champ_seq) directement (ou sur toutes les
+séquences de la base comme ci-dessous).
+
+~~~~
+CREATE DATABASE dbpaie;
+\c dbpaye postgres
+
+CREATE ROLE admpaie LOGIN PASSWORD '...';
+CREATE ROLE paie NOLOGIN; 
+CREATE ROLE anne LOGIN PASSWORD '...';
+CREATE ROLE jean LOGIN PASSWORD '...';
+CREATE ROLE philippe LOGIN PASSWORD '...';
+CREATE ROLE appli LOGIN PASSWORD '...';
+
+REVOKE CONNECT ON DATABASE dbpaie FROM PUBLIC;
+GRANT CONNECT ON DATABASE dbpaie TO anne,jean,philippe,admpaye,appli;
+ 
+GRANT SELECT, INSERT, UPDATE, DELETE
+ ON ALL TABLES IN SCHEMA public 
+ TO admpaie, anne, appli;
+GRANT SELECT, USAGE
+ ON ALL SEQUENCES IN SCHEMA public
+ TO admpaie,anne,appli;
+
+GRANT SELECT
+ ON ALL TABLES IN SCHEMA public 
+ TO paie;
+
+GRANT paie TO jean,philippe;
+~~~~
+
+Note : les droits accordés ici ne valent que pour les tables existantes
+au moment de l'exécution des GRANT. Si de nouvelles tables sont créées
+il faudra les réexécuter ou utiliser :
+
+~~~~
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES TO ...
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, USAGE ON sequences TO ...;
+~~~~
+
+
+~~~~
+
+
+Pratique pour les phases développements :
+
+- Créer une base qui a le même nom que notre utilisateur "normal"
+- Accorder les droits sur la base du même nom que lui à tout utilisateur
+  en en faisant sont propriétaire
+
+Exemple pour un utilisateur Linux dont le login est "formation" :
+
+~~~~
+$ createdb formation   # la base
+$ createuser formation # le rôle
+$ psql
+ALTER DATABASE formation OWNER TO formation;
+# Dans le cas où on a modifié trust en scram-... ou md5 plus haut
+ALTER ROLE formation PASSWORD '...';
+~~~~ 
+
+L'utisateur formation peut se connecter sous son nom à la base qui porte
+le même nom. On peut faire la même chose avec host/IP/masque si l'utilisateur
+est sur un autre hôte.
+
+# Importer la base prod
+
+1. Créer la base : createdb ou CREATE DATABASE prod;
+2. Executer le script SQL fourni 
+
+~~~~
+# git clone https://framagit.org/jpython/pgadmin
+/usr/local/pgsql/bin/createdb prod
+/usr/local/pgsql/bin/psql -d prod -f pgadmin/files/demotab.sql 
+~~~~
+
+Source d'info sur le requètage SQL : https://use-the-index-luke.com/
+(site de Markus Winand) et son blog : https://modern-sql.com/
+Modern SQL et SGBDR de l'industrie : https://modern-sql.com/slides/SQLinThe21stCentury-2020-05-13.pdf
