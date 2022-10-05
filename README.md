@@ -11,3 +11,8 @@ autres dépôts : http://framagit.org/jpython/meta
 - https://framagit.org/jpython/meta
 - https://framagit.org/jpython/cours-postgresql-2/-/tree/master/atelier1
 - https://use-the-index-luke.com/
+
+- TODO :
+- migrer slurm vers postgres sur les controleurs (master slave)
+- séparer moteur postgres des tablespaces (data)
+- compiler postgres 9.6.1 pour edsr prod
