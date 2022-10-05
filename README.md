@@ -11,9 +11,12 @@ autres dépôts : http://framagit.org/jpython/meta
 - https://framagit.org/jpython/meta
 - https://framagit.org/jpython/cours-postgresql-2/-/tree/master/atelier1
 - https://use-the-index-luke.com/
-
+---------------
 - TODO :
 - migrer slurm vers postgres sur les controleurs (master slave)
   - https://www.postgresql.org/docs/9.5/high-availability.html
 - séparer moteur postgres des tablespaces (data)
 - compiler postgres 9.6.1 pour edsr prod
+-------------
+select relname,last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables;
+TABLE pg_stat_activity;
